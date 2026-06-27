@@ -6,11 +6,13 @@ from rag import split_text
 from llm import generate_answer
 
 
-st.set_page_config(page_title="AI Doc Chat", layout="wide")
+st.set_page_config(
+    page_title="AI Document Assistant",
+    page_icon="📄",
+    layout="wide"
+)
 
-st.title("📄 AI Document Chatbot (RAG)")
-
-# Initialize chat history
+# Session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -18,46 +20,113 @@ if "chunks" not in st.session_state:
     st.session_state.chunks = None
 
 
-# Upload PDF
-uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
+# Sidebar
+with st.sidebar:
+    st.title("📄 AI Doc Assistant")
+    st.write("Upload a PDF and chat with it.")
 
-if uploaded_file and st.session_state.chunks is None:
+    uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-        tmp.write(uploaded_file.read())
-        file_path = tmp.name
+    if uploaded_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            tmp.write(uploaded_file.read())
+            file_path = tmp.name
 
-    text = load_pdf(file_path)
-    st.session_state.chunks = split_text(text)
+        text = load_pdf(file_path)
+        st.session_state.chunks = split_text(text)
+        st.success("Document uploaded successfully!")
 
-    st.success("PDF processed! You can start chatting now.")
-
-
-# Show chat history
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.write(msg["content"])
+    if st.button("Clear Chat"):
+        st.session_state.messages = []
+        st.rerun()
 
 
-# User input
-user_input = st.chat_input("Ask something about the document...")
+# Main title
+st.title("📄 AI Document Assistant")
+st.caption("Upload PDFs and chat with your documents using AI")
 
-if user_input and st.session_state.chunks:
 
-    # Add user message
-    st.session_state.messages.append({"role": "user", "content": user_input})
+# If no PDF uploaded
+if st.session_state.chunks is None:
+    st.info("Upload a PDF from the sidebar to start.")
 
-    with st.chat_message("user"):
-        st.write(user_input)
+else:
+    # Quick Actions
+    st.markdown("### Quick Actions")
 
-    # Get context (simple top chunks for now)
-    context = "\n".join(st.session_state.chunks[:5])
+    col1, col2, col3 = st.columns(3)
 
-    # Get AI response
-    answer = generate_answer(user_input, context)
+    with col1:
+        summarize_btn = st.button("📄 Summarize")
 
-    # Add assistant message
-    st.session_state.messages.append({"role": "assistant", "content": answer})
+    with col2:
+        explain_btn = st.button("🧠 Explain Simply")
 
-    with st.chat_message("assistant"):
-        st.write(answer)
+    with col3:
+        flashcards_btn = st.button("📝 Flashcards")
+
+    full_context = "\n".join(st.session_state.chunks[:8])
+
+    if summarize_btn:
+        answer = generate_answer(
+            "Summarize this document in clear bullet points.",
+            full_context
+        )
+
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer
+        })
+
+        st.rerun()
+
+    if explain_btn:
+        answer = generate_answer(
+            "Explain this document in simple beginner-friendly language.",
+            full_context
+        )
+
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer
+        })
+
+        st.rerun()
+
+    if flashcards_btn:
+        answer = generate_answer(
+            "Create 10 flashcards from this document in Question and Answer format.",
+            full_context
+        )
+
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer
+        })
+
+        st.rerun()
+
+    # Chat history
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
+
+    # Chat input
+    user_input = st.chat_input("Ask something about your document...")
+
+    if user_input:
+        st.session_state.messages.append({
+            "role": "user",
+            "content": user_input
+        })
+
+        context = "\n".join(st.session_state.chunks[:5])
+
+        answer = generate_answer(user_input, context)
+
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer
+        })
+
+        st.rerun()
