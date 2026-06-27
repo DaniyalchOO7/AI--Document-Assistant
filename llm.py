@@ -28,5 +28,5 @@ If not found, say: "I don't know from the document."
         )
         return response.text
 
-    except Exception:
-        return "The AI model is busy or unavailable. Please try again in a few moments."
+    except   Exception as e:
+        return f"Gemini error: {e}"
