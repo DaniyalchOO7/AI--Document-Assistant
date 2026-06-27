@@ -1,10 +1,7 @@
-import os
-from dotenv import load_dotenv
+import streamlit as st
 from google import genai
 
-load_dotenv()
-
-api_key = os.getenv("GEMINI_API_KEY")
+api_key = st.secrets["GEMINI_API_KEY"]
 
 client = genai.Client(api_key=api_key)
 
@@ -29,9 +26,7 @@ If not found, say: "I don't know from the document."
             model="gemini-2.0-flash",
             contents=prompt
         )
-
         return response.text
 
-    except Exception as e:
-        print("Gemini Error:", e)
-        return "The AI model is currently busy or unavailable. Please try again in a few moments."
+    except Exception:
+        return "The AI model is busy or unavailable. Please try again in a few moments."
