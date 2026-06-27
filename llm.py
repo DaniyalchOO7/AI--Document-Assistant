@@ -7,26 +7,26 @@ client = genai.Client(api_key=api_key)
 
 
 def generate_answer(question, context):
+
     prompt = f"""
-You are an AI assistant.
+Use ONLY the context below.
 
-Use ONLY the context below:
-
-CONTEXT:
+Context:
 {context}
 
-QUESTION:
+Question:
 {question}
 
-If not found, say: "I don't know from the document."
+Answer clearly:
 """
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-flash-lite-latest",
             contents=prompt
         )
+
         return response.text
 
-    except   Exception as e:
+    except Exception as e:
         return f"Gemini error: {e}"
